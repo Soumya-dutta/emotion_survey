@@ -96,7 +96,7 @@ def survey_page(index):
     if index < len(survey_data):
         st.markdown(
         '<p style="color:red; font-weight:bold;">'
-        '**Reminder:** The content and speaker may differ, but your rating should be based **only** on the speaking style.'
+        '**Reminder:** The content and speaker may differ, but your rating should be based **only** on the speaking style and emotion.'
         '</p>', 
         unsafe_allow_html=True
         )
@@ -167,7 +167,7 @@ def main():
         st.subheader("Example Page")
         st.write(
             "**Please note:** The content, duration and speaker may change between samples. "
-            "Your task is to focus **only** on the speaking style (e.g., emotional expression, tone, prosody)."
+            "Your task is to focus **only** on the speaking style and emotion."
         )
         example()
         if st.button("Next"):
