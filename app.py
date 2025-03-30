@@ -81,27 +81,28 @@ survey_data = [
 # Trick pages mapping
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
+import streamlit.components.v1 as components
+
 def survey_page(index):
-    """Dynamically renders a survey page based on index, ensuring both audios are played before rating."""
+    """Dynamically renders a survey page ensuring both audios are played before rating."""
     if index < len(survey_data):
         source_audio = survey_data[index]["source_audio"]
         converted_audio = survey_data[index]["converted_audio"]
 
-        # Unique identifiers for JavaScript logic
         slider_key = f"slider_{index}"
 
-        # Initialize session state for controlling slider
+        # Initialize session state for the slider
         if slider_key not in st.session_state:
             st.session_state[slider_key] = False  # Initially disabled
 
-        # Inject JavaScript to update session state when audios are played
+        # Inject JavaScript to track audio playback
         js_code = f"""
         <script>
         let played_{index} = {{source: false, converted: false}};
 
         function enableSlider_{index}() {{
             if (played_{index}.source && played_{index}.converted) {{
-                window.parent.postMessage({{"type": "enable_slider", "key": "{slider_key}"}}, "*");
+                fetch("/?set_slider={slider_key}");
             }}
         }}
 
@@ -112,10 +113,9 @@ def survey_page(index):
         </script>
         """
 
-        # Display JavaScript
         st.markdown(js_code, unsafe_allow_html=True)
 
-        # Render audio players
+        # Audio players
         components.html(
             f"""
             <audio controls onended="markPlayed_{index}('source')">
@@ -129,12 +129,12 @@ def survey_page(index):
             height=100
         )
 
-        # Handle session state updates from JavaScript
-        message = st.get_query_params().get("enable_slider")
-        if message and message[0] == slider_key:
+        # Check if the URL has been updated to enable the slider
+        query_params = st.get_query_params()
+        if query_params.get("set_slider") == [slider_key]:
             st.session_state[slider_key] = True
 
-        # Slider is disabled initially, enabled after both audios play
+        # Display the slider (disabled until audios finish playing)
         rating = st.slider(
             f"Rate the emotional similarity (Page {index+1})", 
             1, 5, 3, 
@@ -148,6 +148,7 @@ def survey_page(index):
         return trick_pages[index - len(survey_data)]()
     
     return None
+
 
 def main():
     """Main function handling survey navigation"""
