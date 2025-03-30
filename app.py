@@ -5,7 +5,7 @@ import streamlit as st
 import random
 from example import example
 from trick import trick_1, trick_2, trick_3, trick_4
-
+from firebase_admin import firestore
 
 # Load Firebase secrets
 firebase_secrets = st.secrets["firebase"]
