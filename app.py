@@ -27,7 +27,7 @@ cred_dict = {
 
 # Firebase Initialization
 # cred = credentials.Certificate("synthesis-a89ec-firebase-adminsdk-7rxn2-340276533d.json")
-# firebase_app = firebase_admin.initialize_app(cred, name=str(random.random()))
+firebase_app = firebase_admin.initialize_app(cred_dict, name=str(random.random()))
 db = firestore.client(firebase_app)
 
 # Survey Pages Data (Replace with actual file names)
