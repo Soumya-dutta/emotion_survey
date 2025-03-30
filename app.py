@@ -6,6 +6,7 @@ import random
 from example import example
 from trick import trick_1, trick_2, trick_3, trick_4
 from firebase_admin import firestore
+import streamlit.components.v1 as components
 
 # Load Firebase secrets
 # Load Firebase secrets
@@ -81,15 +82,71 @@ survey_data = [
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
 def survey_page(index):
-    """Dynamically renders a survey page based on index"""
+    """Dynamically renders a survey page based on index, ensuring both audios are played before rating."""
     if index < len(survey_data):
-        st.audio(survey_data[index]["source_audio"], format="audio/wav", start_time=0)
-        st.audio(survey_data[index]["converted_audio"], format="audio/wav", start_time=0)
+        source_audio = survey_data[index]["source_audio"]
+        converted_audio = survey_data[index]["converted_audio"]
 
-        rating = st.slider(f"Rate the emotional similarity (Page {index+1})", 1, 5, 3)
+        # Unique identifiers for JavaScript logic
+        slider_key = f"slider_{index}"
+
+        # Initialize session state for controlling slider
+        if slider_key not in st.session_state:
+            st.session_state[slider_key] = False  # Initially disabled
+
+        # Inject JavaScript to update session state when audios are played
+        js_code = f"""
+        <script>
+        let played_{index} = {{source: false, converted: false}};
+
+        function enableSlider_{index}() {{
+            if (played_{index}.source && played_{index}.converted) {{
+                window.parent.postMessage({{"type": "enable_slider", "key": "{slider_key}"}}, "*");
+            }}
+        }}
+
+        function markPlayed_{index}(audioType) {{
+            played_{index}[audioType] = true;
+            enableSlider_{index}();
+        }}
+        </script>
+        """
+
+        # Display JavaScript
+        st.markdown(js_code, unsafe_allow_html=True)
+
+        # Render audio players
+        components.html(
+            f"""
+            <audio controls onended="markPlayed_{index}('source')">
+                <source src="{source_audio}" type="audio/wav">
+            </audio>
+            <br>
+            <audio controls onended="markPlayed_{index}('converted')">
+                <source src="{converted_audio}" type="audio/wav">
+            </audio>
+            """,
+            height=100
+        )
+
+        # Handle session state updates from JavaScript
+        message = st.experimental_get_query_params().get("enable_slider")
+        if message and message[0] == slider_key:
+            st.session_state[slider_key] = True
+
+        # Slider is disabled initially, enabled after both audios play
+        rating = st.slider(
+            f"Rate the emotional similarity (Page {index+1})", 
+            1, 5, 3, 
+            key=slider_key, 
+            disabled=not st.session_state[slider_key]
+        )
+
         return rating
+
     elif index - len(survey_data) < len(trick_pages):
         return trick_pages[index - len(survey_data)]()
+    
     return None
 
 def main():
