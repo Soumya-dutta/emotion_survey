@@ -130,7 +130,7 @@ def survey_page(index):
         )
 
         # Handle session state updates from JavaScript
-        message = st.experimental_get_query_params().get("enable_slider")
+        message = st.get_query_params().get("enable_slider")
         if message and message[0] == slider_key:
             st.session_state[slider_key] = True
 
