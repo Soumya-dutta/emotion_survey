@@ -8,6 +8,7 @@ from trick import trick_1, trick_2, trick_3, trick_4
 from firebase_admin import firestore
 import streamlit.components.v1 as components
 import datetime
+import time
 
 
 
