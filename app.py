@@ -94,22 +94,31 @@ trick_pages = [trick_1, trick_2, trick_3, trick_4]
 def survey_page(index):
     """Dynamically renders a survey page based on index"""
     if index < len(survey_data):
-        st.audio(survey_data[index]["source_audio"], format="audio/wav", start_time=0)
-        st.audio(survey_data[index]["converted_audio"], format="audio/wav", start_time=0)
+        source_audio = survey_data[index]["source_audio"]
+        converted_audio = survey_data[index]["converted_audio"]
+
+        # Extract only filenames, not full paths
+        source_filename = source_audio.split("/")[-1]
+        converted_filename = converted_audio.split("/")[-1]
+
+        key = f"{source_filename} _ {converted_filename}"
+
+        st.audio(source_audio, format="audio/wav", start_time=0)
+        st.audio(converted_audio, format="audio/wav", start_time=0)
 
         rating = st.slider(f"Rate the emotional similarity (Page {index+1})", 1, 5, 3)
-        return rating
-    # elif index - len(survey_data) < len(trick_pages):
-    #     return trick_pages[index - len(survey_data)]()
-    return None
+        
+        return key, rating  # Return both key and rating
+    return None, None
 
-def submit_results(ratings):
+def submit_results(prolific_id, ratings):
     """Writes survey results to Firebase Firestore."""
-    user_id = f"user_{int(time.time())}"  # Generate a unique user ID based on timestamp
+    user_id = prolific_id if prolific_id else f"user_{int(time.time())}"  # Use Prolific ID if available
     timestamp = datetime.datetime.utcnow()
 
     # Prepare data to write
     data = {
+        "prolific_id": prolific_id,
         "user_id": user_id,
         "timestamp": timestamp,
         "ratings": ratings
@@ -119,31 +128,45 @@ def submit_results(ratings):
     db.collection("survey_results").document(user_id).set(data)
 
 def main():
-    """Main function handling survey navigation"""
+    """Main function handling survey navigation and submission."""
     st.title("Survey Form for Emotional Speech Synthesis")
 
-    st.markdown("""
-    <h2 style='color:blue;'>In each page, listen to two audio files and rate the second audio (CONVERTED) in terms of emotion similarity to the first (SOURCE).</h2>
-    <h2 style='color:red;'>Ignore speaker and content differences. Use Google Chrome for best experience.</h2>
-    """, unsafe_allow_html=True)
-
     session_state = st.session_state
+    if "prolific_id" not in session_state:
+        session_state["prolific_id"] = ""  # Store Prolific ID
     if "page" not in session_state:
-        session_state["page"] = 0
+        session_state["page"] = -1  # -1 for the Prolific ID input page
         session_state["ratings"] = {}
 
     total_pages = len(survey_data) + len(trick_pages)
 
-    if session_state["page"] == 0:
+    if session_state["page"] == -1:
+        # **Prolific ID Input Page**
+        st.subheader("Enter Your Prolific ID")
+        session_state["prolific_id"] = st.text_input("Prolific ID:", value=session_state["prolific_id"])
+        
+        if st.button("Next") and session_state["prolific_id"]:
+            session_state["page"] = 0
+            st.rerun()
+        elif not session_state["prolific_id"]:
+            st.warning("Please enter your Prolific ID to proceed.")
+
+    elif session_state["page"] == 0:
+        # **Example Page**
         example()
         if st.button("Next"):
             session_state["page"] = 1
             st.rerun()
     else:
+        # **Survey Pages**
         page_index = session_state["page"] - 1
 
         if page_index < len(survey_data):
-            session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
+            key, rating = survey_page(page_index)
+
+            if key and rating is not None:
+                session_state["ratings"][key] = rating
+            # session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
 
         st.progress(session_state["page"] / total_pages)
 
@@ -156,13 +179,14 @@ def main():
             st.write("Please click 'Submit' to save your responses.")
 
             if st.button("Submit"):
-                submit_results(session_state["ratings"])
+                submit_results(session_state["prolific_id"], session_state["ratings"])
                 st.success("Your responses have been submitted! 🎉")
                 st.write("Thank you for your participation.")
                 
                 # Optionally clear session state
                 time.sleep(2)
-                session_state["page"] = 0
+                session_state["page"] = -1
+                session_state["prolific_id"] = ""
                 session_state["ratings"] = {}
                 st.rerun()
 
