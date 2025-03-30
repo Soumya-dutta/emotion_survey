@@ -122,13 +122,29 @@ def main():
             st.rerun()
     else:
         page_index = session_state["page"] - 1
-        session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
+
+        if page_index < len(survey_data):
+            session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
 
         st.progress(session_state["page"] / total_pages)
 
-        if st.button("Next"):
-            if session_state["page"] < total_pages:
+        if session_state["page"] < total_pages:
+            if st.button("Next"):
                 session_state["page"] += 1
+                st.rerun()
+        else:
+            st.subheader("Survey Completed! ✅")
+            st.write("Please click 'Submit' to save your responses.")
+
+            if st.button("Submit"):
+                submit_results(session_state["ratings"])
+                st.success("Your responses have been submitted! 🎉")
+                st.write("Thank you for your participation.")
+                
+                # Optionally clear session state
+                time.sleep(2)
+                session_state["page"] = 0
+                session_state["ratings"] = {}
                 st.rerun()
 
 if __name__ == "__main__":
