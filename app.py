@@ -138,7 +138,7 @@ def main():
         session_state["page"] = -1  # -1 for the Prolific ID input page
         session_state["ratings"] = {}
 
-    total_pages = len(survey_data) + len(trick_pages)
+    total_pages = len(survey_data) #+ len(trick_pages)
 
     if session_state["page"] == -1:
         # **Prolific ID Input Page**
