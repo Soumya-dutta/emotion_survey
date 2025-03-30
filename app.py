@@ -94,6 +94,9 @@ trick_pages = [trick_1, trick_2, trick_3, trick_4]
 def survey_page(index):
     """Dynamically renders a survey page based on index"""
     if index < len(survey_data):
+        st.write(
+        "**Reminder:** The content, duration and speaker may differ, but your rating should be based **only** on the speaking style."
+        )
         source_audio = survey_data[index]["source_audio"]
         converted_audio = survey_data[index]["converted_audio"]
 
@@ -153,6 +156,16 @@ def main():
 
     elif session_state["page"] == 0:
         # **Example Page**
+        # example()
+        # if st.button("Next"):
+        #     session_state["page"] = 1
+        #     st.rerun()
+
+        st.subheader("Example Page")
+        st.write(
+            "**Please note:** The content, duration and speaker may change between samples. "
+            "Your task is to focus **only** on the speaking style (e.g., emotional expression, tone, prosody)."
+        )
         example()
         if st.button("Next"):
             session_state["page"] = 1
