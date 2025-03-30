@@ -6,9 +6,24 @@ import random
 from example import example
 from trick import trick_1, trick_2, trick_3, trick_4
 
-cred_dict = json.loads(st.secrets["firebase"])
-cred = credentials.Certificate(cred_dict)
-firebase_admin.initialize_app(cred)
+
+# Load Firebase secrets
+firebase_secrets = st.secrets["firebase"]
+
+# Convert secrets to dict
+cred_dict = {
+    "type": firebase_secrets["type"],
+    "project_id": firebase_secrets["project_id"],
+    "private_key_id": firebase_secrets["private_key_id"],
+    "private_key": firebase_secrets["private_key"].replace("\\n", "\n"),  # Fix multi-line key
+    "client_email": firebase_secrets["client_email"],
+    "client_id": firebase_secrets["client_id"],
+    "auth_uri": firebase_secrets["auth_uri"],
+    "token_uri": firebase_secrets["token_uri"],
+    "auth_provider_x509_cert_url": firebase_secrets["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": firebase_secrets["client_x509_cert_url"],
+    "universe_domain": firebase_secrets["universe_domain"],
+}
 
 # Firebase Initialization
 # cred = credentials.Certificate("synthesis-a89ec-firebase-adminsdk-7rxn2-340276533d.json")
