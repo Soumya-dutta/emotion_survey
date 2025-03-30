@@ -2,7 +2,7 @@ import streamlit as st
 
 def trick_1():
     ratings = {}
-    audio_files = ["files/SSST/0018_001429.wav", "files/SSST/0018_001429.wav"]
+    audio_files = ["files/TIMIT/0018_001429.wav", "files/TIMIT/0018_001429.wav"]
     labels = ['Source', 'Converted']
 
     # Display audio files with labels
@@ -24,7 +24,7 @@ def trick_1():
 def trick_2():
     
     ratings = {}
-    audio_files = ["files/DSDT/0011_001083.wav", "files/SSST/0018_001429.wav"]
+    audio_files = ["files/TIMIT/0011_001083.wav", "files/TIMIT/0018_001429.wav"]
     labels = ['Source', 'Converted']
 
     # Display audio files with labels
@@ -46,7 +46,7 @@ def trick_2():
 def trick_3():
     
     ratings = {}
-    audio_files = ["files/DSDT/0011_001083.wav", "files/DSDT/0011_001083.wav"]
+    audio_files = ["files/TIMIT/0011_001083.wav", "files/TIMIT/0011_001083.wav"]
     labels = ['Source', 'Converted']
 
     # Display audio files with labels
