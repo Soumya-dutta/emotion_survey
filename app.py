@@ -8,6 +8,7 @@ from trick import trick_1, trick_2, trick_3, trick_4
 from firebase_admin import firestore
 
 # Load Firebase secrets
+# Load Firebase secrets
 firebase_secrets = st.secrets["firebase"]
 
 # Convert secrets to dict
@@ -25,10 +26,13 @@ cred_dict = {
     "universe_domain": firebase_secrets["universe_domain"],
 }
 
-# Firebase Initialization
-# cred = credentials.Certificate("synthesis-a89ec-firebase-adminsdk-7rxn2-340276533d.json")
-firebase_app = firebase_admin.initialize_app(cred_dict, name=str(random.random()))
-db = firestore.client(firebase_app)
+# Initialize Firebase (only if not already initialized)
+if not firebase_admin._apps:
+    cred = credentials.Certificate(cred_dict)  # Convert dict to Certificate
+    firebase_admin.initialize_app(cred)
+
+# Get Firestore client
+db = firestore.client()
 
 # Survey Pages Data (Replace with actual file names)
 survey_data = [
