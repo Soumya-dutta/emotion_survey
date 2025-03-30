@@ -25,10 +25,9 @@ cred_dict = {
     "client_x509_cert_url": firebase_secrets["client_x509_cert_url"],
     "universe_domain": firebase_secrets["universe_domain"],
 }
-
+cred = credentials.Certificate(json.loads(json.dumps(cred_dict)))
 # Initialize Firebase (only if not already initialized)
 if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_dict)  # Convert dict to Certificate
     firebase_admin.initialize_app(cred)
 
 # Get Firestore client
