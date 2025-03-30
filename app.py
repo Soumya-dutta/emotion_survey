@@ -7,6 +7,9 @@ from example import example
 from trick import trick_1, trick_2, trick_3, trick_4
 from firebase_admin import firestore
 import streamlit.components.v1 as components
+import datetime
+
+
 
 # Load Firebase secrets
 # Load Firebase secrets
@@ -98,6 +101,21 @@ def survey_page(index):
     # elif index - len(survey_data) < len(trick_pages):
     #     return trick_pages[index - len(survey_data)]()
     return None
+
+def submit_results(ratings):
+    """Writes survey results to Firebase Firestore."""
+    user_id = f"user_{int(time.time())}"  # Generate a unique user ID based on timestamp
+    timestamp = datetime.datetime.utcnow()
+
+    # Prepare data to write
+    data = {
+        "user_id": user_id,
+        "timestamp": timestamp,
+        "ratings": ratings
+    }
+
+    # Write to Firestore
+    db.collection("survey_results").document(user_id).set(data)
 
 def main():
     """Main function handling survey navigation"""
