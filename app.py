@@ -112,7 +112,7 @@ def main():
         example()
         if st.button("Next"):
             session_state["page"] = 1
-            st.experimental_rerun()
+            st.rerun()
     else:
         page_index = session_state["page"] - 1
         session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
@@ -122,7 +122,7 @@ def main():
         if st.button("Next"):
             if session_state["page"] < total_pages:
                 session_state["page"] += 1
-                st.experimental_rerun()
+                st.rerun()
 
 if __name__ == "__main__":
     main()
