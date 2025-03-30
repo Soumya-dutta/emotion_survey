@@ -1,13 +1,18 @@
-import streamlit as st
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials
+import json
+import streamlit as st
 import random
 from example import example
 from trick import trick_1, trick_2, trick_3, trick_4
 
+cred_dict = json.loads(st.secrets["firebase"])
+cred = credentials.Certificate(cred_dict)
+firebase_admin.initialize_app(cred)
+
 # Firebase Initialization
-cred = credentials.Certificate("synthesis-a89ec-firebase-adminsdk-7rxn2-340276533d.json")
-firebase_app = firebase_admin.initialize_app(cred, name=str(random.random()))
+# cred = credentials.Certificate("synthesis-a89ec-firebase-adminsdk-7rxn2-340276533d.json")
+# firebase_app = firebase_admin.initialize_app(cred, name=str(random.random()))
 db = firestore.client(firebase_app)
 
 # Survey Pages Data (Replace with actual file names)
