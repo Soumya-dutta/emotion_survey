@@ -44,6 +44,7 @@ survey_data = [
     {"source_audio": "files/ssst/0017_001076.wav", "converted_audio": "files/ssst/0017_000026--0017_001076.wav"},
     {"source_audio": "files/ssst/0018_001440.wav", "converted_audio": "files/ssst/0018_000040--0018_001440.wav"},
     {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_000036--0020_001436.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_001436.wav"},
     {"source_audio": "files/ssdt/0011_000732.wav", "converted_audio": "files/ssdt/0011_000039--0011_000732.wav"},
     {"source_audio": "files/ssdt/0012_000385.wav", "converted_audio": "files/ssdt/0012_000028--0012_000385.wav"},
     {"source_audio": "files/ssdt/0013_001424.wav", "converted_audio": "files/ssdt/0013_000042--0013_001424.wav"},
@@ -52,6 +53,7 @@ survey_data = [
     {"source_audio": "files/ssdt/0015_001079.wav", "converted_audio": "files/ssdt/0015_000032--0015_001079.wav"},
     {"source_audio": "files/ssdt/0016_001426.wav", "converted_audio": "files/ssdt/0016_000035--0016_001426.wav"},
     {"source_audio": "files/ssdt/0018_000730.wav", "converted_audio": "files/ssdt/0018_000025--0018_000730.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_000036.wav"},    
     {"source_audio": "files/dsst/0013_000723.wav", "converted_audio": "files/dsst/0011_000023--0013_000723.wav"},
     {"source_audio": "files/dsst/0018_000391.wav", "converted_audio": "files/dsst/0012_000041--0018_000391.wav"},
     {"source_audio": "files/dsst/0012_000394.wav", "converted_audio": "files/dsst/0013_000044--0012_000394.wav"},
@@ -60,6 +62,7 @@ survey_data = [
     {"source_audio": "files/dsst/0015_001086.wav", "converted_audio": "files/dsst/0018_000036--0015_001086.wav"},
     {"source_audio": "files/dsst/0013_001438.wav", "converted_audio": "files/dsst/0019_000038--0013_001438.wav"},
     {"source_audio": "files/dsst/0019_001100.wav", "converted_audio": "files/dsst/0020_000050--0019_001100.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_000036.wav"},        
     {"source_audio": "files/dsdt/0012_000377.wav", "converted_audio": "files/dsdt/0011_000035--0012_000377.wav"},
     {"source_audio": "files/dsdt/0012_000380.wav", "converted_audio": "files/dsdt/0013_000040--0012_000380.wav"},
     {"source_audio": "files/dsdt/0011_000724.wav", "converted_audio": "files/dsdt/0014_000025--0011_000724.wav"},
@@ -68,14 +71,17 @@ survey_data = [
     {"source_audio": "files/dsdt/0012_000737.wav", "converted_audio": "files/dsdt/0018_000044--0012_000737.wav"},
     {"source_audio": "files/dsdt/0016_001438.wav", "converted_audio": "files/dsdt/0019_000021--0016_001438.wav"},
     {"source_audio": "files/dsdt/0015_001080.wav", "converted_audio": "files/dsdt/0020_000041--0015_001080.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_001436.wav"},    
     {"source_audio": "files/uss/0011_000373.wav", "converted_audio": "files/uss/FSAH0_SI1874--0011_000373.wav"},
     {"source_audio": "files/uss/0015_000746.wav", "converted_audio": "files/uss/MKLS0_SA1--0015_000746.wav"},
     {"source_audio": "files/uss/0016_001089.wav", "converted_audio": "files/uss/MCPM0_SA2--0016_001089.wav"},
     {"source_audio": "files/uss/0018_001441.wav", "converted_audio": "files/uss/FSAH0_SX74--0018_001441.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_001436.wav"},    
     {"source_audio": "files/ute/1003_TIE_FEA_XX.wav", "converted_audio": "files/ute/0011_000021--1003_TIE_FEA_XX.wav"},
     {"source_audio": "files/ute/1043_TAI_DIS_XX.wav", "converted_audio": "files/ute/0015_000034--1043_TAI_DIS_XX.wav"},
     {"source_audio": "files/ute/1057_IWL_DIS_XX.wav", "converted_audio": "files/ute/0017_000038--1057_IWL_DIS_XX.wav"},
     {"source_audio": "files/ute/1089_IOM_FEA_XX.wav", "converted_audio": "files/ute/0016_000035--1089_IOM_FEA_XX.wav"},
+    {"source_audio": "files/ssst/0020_001436.wav", "converted_audio": "files/ssst/0020_000036.wav"},
 ]
 
 # Trick pages mapping
@@ -89,8 +95,8 @@ def survey_page(index):
 
         rating = st.slider(f"Rate the emotional similarity (Page {index+1})", 1, 5, 3)
         return rating
-    elif index - len(survey_data) < len(trick_pages):
-        return trick_pages[index - len(survey_data)]()
+    # elif index - len(survey_data) < len(trick_pages):
+    #     return trick_pages[index - len(survey_data)]()
     return None
 
 def main():
