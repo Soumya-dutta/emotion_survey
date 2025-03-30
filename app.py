@@ -81,74 +81,17 @@ survey_data = [
 # Trick pages mapping
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
-import streamlit.components.v1 as components
-
 def survey_page(index):
-    """Dynamically renders a survey page ensuring both audios are played before rating."""
+    """Dynamically renders a survey page based on index"""
     if index < len(survey_data):
-        source_audio = survey_data[index]["source_audio"]
-        converted_audio = survey_data[index]["converted_audio"]
+        st.audio(survey_data[index]["source_audio"], format="audio/wav", start_time=0)
+        st.audio(survey_data[index]["converted_audio"], format="audio/wav", start_time=0)
 
-        slider_key = f"slider_{index}"
-
-        # Initialize session state for the slider
-        if slider_key not in st.session_state:
-            st.session_state[slider_key] = False  # Initially disabled
-
-        # Inject JavaScript to track audio playback
-        js_code = f"""
-        <script>
-        let played_{index} = {{source: false, converted: false}};
-
-        function enableSlider_{index}() {{
-            if (played_{index}.source && played_{index}.converted) {{
-                fetch("/?set_slider={slider_key}");
-            }}
-        }}
-
-        function markPlayed_{index}(audioType) {{
-            played_{index}[audioType] = true;
-            enableSlider_{index}();
-        }}
-        </script>
-        """
-
-        st.markdown(js_code, unsafe_allow_html=True)
-
-        # Audio players
-        components.html(
-            f"""
-            <audio controls onended="markPlayed_{index}('source')">
-                <source src="{source_audio}" type="audio/wav">
-            </audio>
-            <br>
-            <audio controls onended="markPlayed_{index}('converted')">
-                <source src="{converted_audio}" type="audio/wav">
-            </audio>
-            """,
-            height=100
-        )
-
-        # Check if the URL has been updated to enable the slider
-        query_params = st.get_query_params()
-        if query_params.get("set_slider") == [slider_key]:
-            st.session_state[slider_key] = True
-
-        # Display the slider (disabled until audios finish playing)
-        rating = st.slider(
-            f"Rate the emotional similarity (Page {index+1})", 
-            1, 5, 3, 
-            key=slider_key, 
-            disabled=not st.session_state[slider_key]
-        )
-
+        rating = st.slider(f"Rate the emotional similarity (Page {index+1})", 1, 5, 3)
         return rating
-
     elif index - len(survey_data) < len(trick_pages):
         return trick_pages[index - len(survey_data)]()
-    
     return None
-
 
 def main():
     """Main function handling survey navigation"""
