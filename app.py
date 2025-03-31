@@ -143,8 +143,16 @@ def main():
     if "page" not in session_state:
         session_state["page"] = -1  # -1 for the Prolific ID input page
         session_state["ratings"] = {}
+    if "completed" not in session_state:
+        session_state["completed"] = False  # Flag to track completion
 
-    total_pages = len(survey_data) #+ len(trick_pages)
+    total_pages = len(survey_data)
+
+    if session_state["completed"]:
+        # **Final Thank You Page**
+        st.subheader("Thank You for Your Participation! 🎉")
+        st.write("Your responses have been successfully submitted.")
+        return  # Stop execution here
 
     if session_state["page"] == -1:
         # **Prolific ID Input Page**
@@ -158,12 +166,6 @@ def main():
             st.warning("Please enter your Prolific ID to proceed.")
 
     elif session_state["page"] == 0:
-        # **Example Page**
-        # example()
-        # if st.button("Next"):
-        #     session_state["page"] = 1
-        #     st.rerun()
-
         st.subheader("Example Page")
         st.write(
             "**Please note:** The content, duration and speaker may change between samples. "
@@ -182,7 +184,6 @@ def main():
 
             if key and rating is not None:
                 session_state["ratings"][key] = rating
-            # session_state["ratings"][f"Page {session_state['page']}"] = survey_page(page_index)
 
         st.progress(session_state["page"] / total_pages)
 
@@ -196,15 +197,11 @@ def main():
 
             if st.button("Submit"):
                 submit_results(session_state["prolific_id"], session_state["ratings"])
-                st.success("Your responses have been submitted! 🎉")
-                st.write("Thank you for your participation.")
-                
-                # Optionally clear session state
-                time.sleep(2)
-                session_state["page"] = -1
-                session_state["prolific_id"] = ""
-                session_state["ratings"] = {}
-                st.rerun()
+                session_state["completed"] = True  # Mark as completed
+                st.rerun()  # Refresh to show Thank You page
 
 if __name__ == "__main__":
     main()
+
+
+
