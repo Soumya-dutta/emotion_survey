@@ -9,7 +9,7 @@ from firebase_admin import firestore
 import streamlit.components.v1 as components
 import datetime
 import time
-
+import numpy as np
 
 
 # Load Firebase secrets
@@ -49,7 +49,7 @@ survey_data = [
     {"source_audio": "samples_ZEST/ssdt/0015_001073.wav", "converted_audio": "samples_ZEST/ssdt/0015_000032--0015_001073.wav"},
     {"source_audio": "samples_ZEST/ssdt/0016_001426.wav", "converted_audio": "samples_ZEST/ssdt/0016_000035--0016_001426.wav"},
     {"source_audio": "samples_ZEST/ssdt/0018_000730.wav", "converted_audio": "samples_ZEST/ssdt/0018_000025--0018_000730.wav"},
-    {"source_audio": "samples_ZEST/ssst/0020_001436.wav", "converted_audio": "samples_ZEST/ssst/0020_000036.wav"},    
+    {"source_audio": "samples_ZEST/ssst/0014_000379.wav", "converted_audio": "samples_ZEST/ssst/0014_000379.wav"},    
     {"source_audio": "samples_ZEST/dsst/0013_000723.wav", "converted_audio": "samples_ZEST/dsst/0011_000023--0013_000723.wav"},
     {"source_audio": "samples_ZEST/dsst/0012_000394.wav", "converted_audio": "samples_ZEST/dsst/0013_000044--0012_000394.wav"},
     {"source_audio": "samples_ZEST/dsst/0012_001425.wav", "converted_audio": "samples_ZEST/dsst/0016_000025--0012_001425.wav"},
@@ -59,17 +59,17 @@ survey_data = [
     {"source_audio": "samples_ZEST/dsdt/0011_000724.wav", "converted_audio": "samples_ZEST/dsdt/0014_000025--0011_000724.wav"},
     {"source_audio": "samples_ZEST/dsdt/0016_001438.wav", "converted_audio": "samples_ZEST/dsdt/0019_000021--0016_001438.wav"},
     {"source_audio": "samples_ZEST/dsdt/0015_001080.wav", "converted_audio": "samples_ZEST/dsdt/0020_000041--0015_001080.wav"},
-    {"source_audio": "samples_ZEST/ssst/0020_001436.wav", "converted_audio": "samples_ZEST/ssst/0020_001436.wav"},    
+    {"source_audio": "samples_ZEST/ssst/0017_001076.wav", "converted_audio": "samples_ZEST/ssst/0017_001076.wav"},    
     {"source_audio": "samples_ZEST/uss/0011_000373.wav", "converted_audio": "samples_ZEST/uss/FSAH0_SI1874--0011_000373.wav"},
     {"source_audio": "samples_ZEST/uss/0015_000746.wav", "converted_audio": "samples_ZEST/uss/MKLS0_SA1--0015_000746.wav"},
     {"source_audio": "samples_ZEST/uss/0016_001089.wav", "converted_audio": "samples_ZEST/uss/MCPM0_SA2--0016_001089.wav"},
     {"source_audio": "samples_ZEST/uss/0018_001441.wav", "converted_audio": "samples_ZEST/uss/FSAH0_SX74--0018_001441.wav"},
-    {"source_audio": "samples_ZEST/ssst/0020_001436.wav", "converted_audio": "samples_ZEST/ssst/0020_001436.wav"},    
+    {"source_audio": "samples_ZEST/dsst/0018_000036.wav", "converted_audio": "samples_ZEST/dsst/0018_000036.wav"},    
     {"source_audio": "samples_ZEST/ute/1003_TIE_FEA_XX.wav", "converted_audio": "samples_ZEST/ute/0011_000021--1003_TIE_FEA_XX.wav"},
     {"source_audio": "samples_ZEST/ute/1043_TAI_DIS_XX.wav", "converted_audio": "samples_ZEST/ute/0015_000034--1043_TAI_DIS_XX.wav"},
     {"source_audio": "samples_ZEST/ute/1057_IWL_DIS_XX.wav", "converted_audio": "samples_ZEST/ute/0017_000038--1057_IWL_DIS_XX.wav"},
     {"source_audio": "samples_ZEST/ute/1089_IOM_FEA_XX.wav", "converted_audio": "samples_ZEST/ute/0016_000035--1089_IOM_FEA_XX.wav"},
-    {"source_audio": "samples_stargan/ssst/0020_001436.wav", "converted_audio": "samples_stargan/ssst/0020_000036.wav"},
+    {"source_audio": "samples_ZEST/ssst/0017_001076.wav", "converted_audio": "samples_ZEST/ssst/0017_001076.wav"},    
     {"source_audio": "samples_stargan/ssst/0012_000725.wav", "converted_audio": "samples_stargan/ssst/0012_000025--0012_000725.wav"},
     {"source_audio": "samples_stargan/ssst/0014_000379.wav", "converted_audio": "samples_stargan/ssst/0014_000029--0014_000379.wav"},
     {"source_audio": "samples_stargan/ssst/0017_001076.wav", "converted_audio": "samples_stargan/ssst/0017_000026--0017_001076.wav"},
@@ -91,10 +91,10 @@ survey_data = [
     {"source_audio": "samples_stargan/dsdt/0015_001080.wav", "converted_audio": "samples_stargan/dsdt/0020_000041--0015_001080.wav"},
     {"source_audio": "samples_stargan/ssst/0020_001436.wav", "converted_audio": "samples_stargan/ssst/0020_001436.wav"},    
     {"source_audio": "samples_stargan/ssst/0020_001436.wav", "converted_audio": "samples_stargan/ssst/0020_001436.wav"},    
-    {"source_audio": "samples_stargan/ute/1003_TIE_FEA_XX.wav", "converted_audio": "samples_stargan/ute/0011_000021--1003_TIE_FEA_XX.wav"},
-    {"source_audio": "samples_stargan/ute/1043_TAI_DIS_XX.wav", "converted_audio": "samples_stargan/ute/0015_000034--1043_TAI_DIS_XX.wav"},
-    {"source_audio": "samples_stargan/ute/1057_IWL_DIS_XX.wav", "converted_audio": "samples_stargan/ute/0017_000038--1057_IWL_DIS_XX.wav"},
-    {"source_audio": "samples_stargan/ute/1089_IOM_FEA_XX.wav", "converted_audio": "samples_stargan/ute/0016_000035--1089_IOM_FEA_XX.wav"},
+    {"source_audio": "samples_stargan/uss/0011_000373.wav", "converted_audio": "samples_stargan/uss/FSAH0_SI1874--0011_000373.wav"},
+    {"source_audio": "samples_stargan/uss/0015_000746.wav", "converted_audio": "samples_stargan/uss/MKLS0_SA1--0015_000746.wav"},
+    {"source_audio": "samples_stargan/uss/0016_001089.wav", "converted_audio": "samples_stargan/uss/MCPM0_SA2--0016_001089.wav"},
+    {"source_audio": "samples_stargan/uss/0018_001441.wav", "converted_audio": "samples_stargan/uss/FSAH0_SX74--0018_001441.wav"},
     {"source_audio": "samples_stargan/ssst/0020_001436.wav", "converted_audio": "samples_stargan/ssst/0020_000036.wav"},
     {"source_audio": "samples_VEVO/ssst/0012_000725.wav", "converted_audio": "samples_VEVO/ssst/0012_000025--0012_000725.wav"},
     {"source_audio": "samples_VEVO/ssst/0014_000379.wav", "converted_audio": "samples_VEVO/ssst/0014_000029--0014_000379.wav"},
@@ -127,7 +127,7 @@ survey_data = [
     {"source_audio": "samples_VEVO/ute/1089_IOM_FEA_XX.wav", "converted_audio": "samples_VEVO/ute/0016_000035--1089_IOM_FEA_XX.wav"},
     {"source_audio": "samples_VEVO/ssst/0020_001436.wav", "converted_audio": "samples_VEVO/ssst/0020_000036.wav"},
 ]
-
+np.random.shuffle(survey_data)
 # Trick pages mapping
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
