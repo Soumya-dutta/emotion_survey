@@ -142,24 +142,24 @@ def survey_page(index):
 
     # Logic after *this page's form* is submitted
     if submit_clicked:
-        st.toast(f"Ratings for Task {index + 1} saved!", icon="✅") # Use toast for less intrusive feedback
-        # Iterate through the methods *intended* for this page again to save ratings
-        for i, (method, audio_path) in enumerate(method_items):
-            if not audio_path: continue
+    st.toast(f"Ratings for Task {index + 1} saved!", icon="✅")
 
-            source_filename = os.path.basename(reference_audio_path)
-            converted_filename = os.path.basename(audio_path)
-            rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
+    for i, (method, audio_path) in enumerate(method_items):
+        if not audio_path:
+            continue
+        source_filename = os.path.basename(reference_audio_path)
+        converted_filename = os.path.basename(audio_path)
+        rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-            # Check if the slider key exists in session_state (it should if rendered)
-            if rating_key in st.session_state:
-                # Update the main ratings dictionary IN SESSION STATE
-                st.session_state.ratings[rating_key] = st.session_state[rating_key]
-            else:
-                 # Log if a key is unexpectedly missing
-                 # print(f"Warning: Rating key {rating_key} not found in session_state after submit.")
-                 pass
-        # No need to return ratings, they are saved directly to st.session_state.ratings
+        if rating_key in st.session_state:
+            st.session_state.ratings[rating_key] = st.session_state[rating_key]
+
+    # Set a flag so we know ratings were saved
+    st.session_state["ratings_saved_for_index"] = index
+    if st.session_state.get("ratings_saved_for_index") == index:
+    if st.button("➡️ Go to Next Task"):
+        st.session_state.page_index += 1
+        st.rerun()  # Needed to actually move to next page
 
 
 
