@@ -124,14 +124,15 @@ def survey_page(index):
                     key=rating_key
                 )
 
-        # submit_clicked = st.form_submit_button("Save Ratings")
+        submit_clicked = st.form_submit_button("Save Ratings")
 
     # Store the ratings
-    for method, audio in method_audios.items():
-        source_filename = reference_audio.split("/")[-1]
-        converted_filename = audio.split("/")[-1]
-        rating_key = f"{source_filename}_{converted_filename}_{method}"
-        ratings[rating_key] = st.session_state.get(rating_key, 3)
+    if submit_clicked:
+        for method, audio in method_audios.items():
+            source_filename = reference_audio.split("/")[-1]
+            converted_filename = audio.split("/")[-1]
+            rating_key = f"{source_filename}_{converted_filename}_{method}"
+            ratings[rating_key] = st.session_state.get(rating_key, 3)
 
     return ratings
 
