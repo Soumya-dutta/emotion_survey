@@ -122,8 +122,8 @@ def survey_page(index):
                      st.error("Skipping rating for this option.")
                      continue # Skip slider if audio fails
 
-                source_filename = os.path.basename(reference_audio_path)
-                converted_filename = os.path.basename(audio_path)
+                source_filename = reference_audio_path.split(os.sep)[-1]
+                converted_filename = audio_path.split(os.sep)[-1]
                 # Consistent rating key format
                 rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
