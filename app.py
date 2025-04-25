@@ -75,90 +75,91 @@ np.random.shuffle(survey_data)
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
 def survey_page(index):
-    """Render a single survey page with audio and sliders."""
-    if index >= len(survey_data):
-        return {}
-
-    # Add a reminder message at the top
+    """Render a single survey page with audio and sliders. Saves ratings directly."""
     st.markdown(
         '<p style="color:red; font-weight:bold;">'
         '**Reminder:** The content, speaker and duration may differ, but your rating should be based **only** on the speaking style and emotion.'
-        '</p>', 
+        '</p>',
         unsafe_allow_html=True
     )
 
-    # Get data for the current survey page
     data = survey_data[index]
-    reference_audio = data["reference"]
-    method_audios = {
+    reference_audio_path = data["reference"]
+    method_audio_paths = {
         "zest": data.get("zest"),
         "gan": data.get("gan"),
         "vevo": data.get("vevo")
     }
-    method_audios = {k: v for k, v in method_audios.items() if v}
+    method_audio_paths = {k: v for k, v in method_audio_paths.items() if v}
 
-    st.subheader(f"Page {index + 1}")
+    st.subheader(f"Rating Task {index + 1} of {len(survey_data)}") # Changed title slightly
     st.markdown("**Reference Audio**")
 
-    # Load the reference audio only once and store it in session state
-    if f"reference_audio_{index}" not in st.session_state:
-        st.session_state[f"reference_audio_{index}"] = reference_audio
+    try:
+        st.audio(reference_audio_path, format="audio/wav")
+    except Exception as e:
+        st.error(f"Error loading reference audio: {reference_audio_path}. Error: {e}")
+        return # Stop rendering this page if reference audio fails
 
-    # Play reference audio
-    st.audio(st.session_state[f"reference_audio_{index}"], format="audio/wav")
-
-    # Initialize ratings dictionary
-    ratings = {}
-
-    # Create a form for rating the audio files
+    # Form for Rating - crucial for grouping inputs and the save button
     with st.form(key=f"form_page_{index}"):
-
-        # Load the method audios only once and store them in session state
-        if f"method_audios_{index}" not in st.session_state:
-            st.session_state[f"method_audios_{index}"] = method_audios
-
         st.markdown("**Converted Audios**")
-        cols = st.columns(len(st.session_state[f"method_audios_{index}"]))
+        if not method_audio_paths:
+            st.warning("No converted audio files found for this page.")
+            cols = []
+        else:
+            cols = st.columns(len(method_audio_paths))
 
-        for i, (method, audio) in enumerate(st.session_state[f"method_audios_{index}"].items()):
+        method_items = list(method_audio_paths.items()) # Fixed order
+
+        for i, (method, audio_path) in enumerate(method_items):
             with cols[i]:
-                st.markdown(f"**Option {i + 1}**")
-                st.audio(audio, format="audio/wav")
+                st.markdown(f"**Option {i + 1} ({method})**")
+                try:
+                    st.audio(audio_path, format="audio/wav")
+                except Exception as e:
+                     st.error(f"Error loading {method} audio: {audio_path}. Error: {e}")
+                     st.error("Skipping rating for this option.")
+                     continue # Skip slider if audio fails
 
-                # Create a unique rating key
-                source_filename = reference_audio.split("/")[-1]
-                converted_filename = audio.split("/")[-1]
-                rating_key = f"{source_filename}_{converted_filename}_{method}"
+                source_filename = os.path.basename(reference_audio_path)
+                converted_filename = os.path.basename(audio_path)
+                # Consistent rating key format
+                rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-                # Set the default slider value to the previous value (if any)
-                default_val = st.session_state.get(rating_key, 3)
+                # Get default value from central session_state.ratings
+                default_val = st.session_state.ratings.get(rating_key, 3)
+
                 st.slider(
-                    f"Similarity for Option {i + 1}",
-                    min_value=1,
-                    max_value=5,
-                    value=default_val,
-                    key=rating_key
+                    f"Similarity (Option {i+1} vs Reference)", # More descriptive label
+                    min_value=1, max_value=5, value=default_val,
+                    key=rating_key # Use the unique key for the slider widget AND for session_state storage
                 )
 
-        # Submit button inside the form
-        # submit_clicked = st.form_submit_button("Save Ratings")
+        # Submit button *inside* the form specific to this page's ratings
+        submit_clicked = st.form_submit_button("💾 Save Ratings for this Page")
 
-    # Store ratings when the form is submitted, but prevent page transition
-    if True:
-        for method, audio in st.session_state[f"method_audios_{index}"].items():
-            source_filename = reference_audio.split("/")[-1]
-            converted_filename = audio.split("/")[-1]
-            rating_key = f"{source_filename}_{converted_filename}_{method}"
-            ratings[rating_key] = st.session_state.get(rating_key, 3)
+    # Logic after *this page's form* is submitted
+    if submit_clicked:
+        st.toast(f"Ratings for Task {index + 1} saved!", icon="✅") # Use toast for less intrusive feedback
+        # Iterate through the methods *intended* for this page again to save ratings
+        for i, (method, audio_path) in enumerate(method_items):
+            if not audio_path: continue
 
-        # Update session_state with the saved ratings
-        if "ratings" not in st.session_state:
-            st.session_state["ratings"] = {}
+            source_filename = os.path.basename(reference_audio_path)
+            converted_filename = os.path.basename(audio_path)
+            rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-        for key, value in ratings.items():
-            st.session_state["ratings"][key] = value
+            # Check if the slider key exists in session_state (it should if rendered)
+            if rating_key in st.session_state:
+                # Update the main ratings dictionary IN SESSION STATE
+                st.session_state.ratings[rating_key] = st.session_state[rating_key]
+            else:
+                 # Log if a key is unexpectedly missing
+                 # print(f"Warning: Rating key {rating_key} not found in session_state after submit.")
+                 pass
+        # No need to return ratings, they are saved directly to st.session_state.ratings
 
-    return ratings
 
 
 
@@ -182,73 +183,129 @@ def submit_results(prolific_id, ratings):
 
 def main():
     """Main function handling survey navigation and submission."""
-    st.title("Survey Form for Emotional Speech Synthesis")
+    st.title("Survey: Emotional Speech Style Similarity")
 
-    session_state = st.session_state
-    if "prolific_id" not in session_state:
-        session_state["prolific_id"] = ""  # Store Prolific ID
-    if "page" not in session_state:
-        session_state["page"] = -1  # -1 for the Prolific ID input page
-        session_state["ratings"] = {}
-    if "completed" not in session_state:
-        session_state["completed"] = False  # Flag to track completion
+    # Use st.session_state directly for clarity
+    if "prolific_id" not in st.session_state:
+        st.session_state["prolific_id"] = ""
+    if "page" not in st.session_state:
+        # Page states: -1: ID, 0: Example, 1 to N: Survey pages, N+1: Submit page
+        st.session_state["page"] = -1
+        st.session_state["ratings"] = {} # Initialize central ratings dict
+    if "completed" not in st.session_state:
+        st.session_state["completed"] = False
 
-    total_pages = len(survey_data)
+    # Calculate total number of actual survey pages
+    num_survey_pages = len(survey_data)
+    # Total steps include ID (-1), Example (0), survey pages (1 to N)
+    total_steps = num_survey_pages + 1
 
-    if session_state["completed"]:
-        # **Final Thank You Page**
+    # --- Final Thank You Page ---
+    if st.session_state["completed"]:
+        st.balloons()
         st.subheader("Thank You for Your Participation! 🎉")
         st.write("Your responses have been successfully submitted.")
-        return  # Stop execution here
+        st.write("You may now close this window.")
+        # Optionally display Prolific completion code here
+        # st.code("YOUR_PROLIFIC_COMPLETION_CODE")
+        return # Stop execution
 
-    if session_state["page"] == -1:
-        # **Prolific ID Input Page**
-        st.subheader("Enter Your Prolific ID")
-        session_state["prolific_id"] = st.text_input("Prolific ID:", value=session_state["prolific_id"])
-        
-        if st.button("Next") and session_state["prolific_id"]:
-            session_state["page"] = 0
+    # --- Page Rendering Logic ---
+    current_page = st.session_state["page"]
+
+    if current_page == -1:
+        # --- Prolific ID Input Page ---
+        st.subheader("1. Enter Your Prolific ID")
+        prolific_id_input = st.text_input("Prolific ID:", value=st.session_state["prolific_id"], key="prolific_id_widget")
+
+        # Update session state if input changes
+        st.session_state["prolific_id"] = prolific_id_input
+
+        # Use columns for layout
+        _, col2 = st.columns([3, 1]) # Push button to the right
+        with col2:
+            # Disable button if ID is empty
+            proceed = st.button("Next Step ➡️", disabled=(not st.session_state["prolific_id"]))
+
+        if proceed:
+            st.session_state["page"] = 0 # Move to Example page
             st.rerun()
-        elif not session_state["prolific_id"]:
-            st.warning("Please enter your Prolific ID to proceed.")
+        elif not st.session_state["prolific_id"] and st.button attempted: # Check if button was clicked without ID
+             st.warning("Please enter your Prolific ID to proceed.")
 
-    elif session_state["page"] == 0:
-        st.subheader("Example Page")
+
+    elif current_page == 0:
+        # --- Example Page ---
+        st.subheader("2. Example Task & Instructions")
         st.write(
-            "**Please note:** The content, duration and speaker may change between samples. "
-            "Your task is to focus **only** on the speaking style and emotion."
+            "**Instructions:** You will hear a reference audio sample followed by one or more converted audio samples. "
+            "Please rate how similar the **speaking style and emotion** of each converted sample is to the reference sample on a scale of 1 (Not similar) to 5 (Very similar). "
         )
-        example()
-        if st.button("Next"):
-            session_state["page"] = 1
-            st.rerun()
-    else:
-        # **Survey Pages**
-        page_index = session_state["page"] - 1
+        st.warning(
+            "**Important:** The verbal content, speaker identity, and duration might differ between the reference and converted samples. Please base your rating **only** on the similarity of the speaking style and emotion."
+            )
+        example() # Display the example content
 
-        if page_index < len(survey_data):
-            ratings = survey_page(page_index)
-
-            # Save ratings only if not already stored to avoid overwriting unintentionally
-            for key, val in ratings.items():
-                if key not in session_state["ratings"]:
-                    session_state["ratings"][key] = val
-
-        st.progress(session_state["page"] / total_pages)
-
-        # Ensure that moving to the next page only happens on explicit button press
-        if session_state["page"] < total_pages:
-            if st.button("Next"):
-                session_state["page"] += 1
+        _, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("Start Survey Tasks ➡️"):
+                st.session_state["page"] = 1 # Move to first survey page
                 st.rerun()
-        else:
-            st.subheader("Survey Completed! ✅")
-            st.write("Please click 'Submit' to save your responses.")
 
-            if st.button("Submit"):
-                submit_results(session_state["prolific_id"], session_state["ratings"])
-                session_state["completed"] = True  # Mark as completed
-                st.rerun()  # Refresh to show Thank You page
+    elif 1 <= current_page <= num_survey_pages:
+        # --- Survey Pages ---
+        page_index = current_page - 1 # 0-based index for survey_data list
+
+        # Display progress (adjusting for ID and Example pages)
+        # Current step is 'page + 1' (since page starts at -1)
+        # Total steps including ID, Example, N survey pages = N + 2
+        progress_float = (current_page + 1) / (num_survey_pages + 2)
+        st.progress(progress_float, text=f"Progress: Task {current_page} of {num_survey_pages}")
+
+        # Render the survey page - it handles its own rating saving via its form
+        survey_page(page_index)
+
+        # --- Navigation Buttons (Below the Survey Page Form) ---
+        st.divider()
+        nav_cols = st.columns([1, 1, 1]) # Use 3 columns for Prev, Info, Next
+
+        with nav_cols[0]: # Previous Button
+            # Allow going back to Example (page 0) or previous survey page
+            if current_page > 0: # Can always go back from page 1 onwards
+                 # Check if it's the first survey page (current_page == 1)
+                 prev_label = "⬅️ Back to Example" if current_page == 1 else "⬅️ Previous Task"
+                 if st.button(prev_label):
+                    st.session_state.page -= 1
+                    st.rerun()
+
+        with nav_cols[1]: # Page Indicator
+             st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
+
+
+        with nav_cols[2]: # Next Button
+             # Check if it's the last survey page
+             next_label = "Finish Survey Tasks ➡️" if current_page == num_survey_pages else "Next Task ➡️"
+             if st.button(next_label):
+                 st.session_state.page += 1 # Move to next survey page or to submit page
+                 st.rerun()
+
+    elif current_page == num_survey_pages + 1:
+        # --- Submission Page ---
+        st.subheader(f"{num_survey_pages + 2}. Submit Your Responses")
+        st.success("Survey tasks completed! ✅")
+        st.write("Thank you for completing all the rating tasks. Please click 'Submit All Responses' below to finalize your participation.")
+        st.warning("Ensure you have saved ratings on each page using the 'Save Ratings for this Page' button before submitting.")
+
+        # Display collected ratings (optional, for user review)
+        with st.expander("Review Your Ratings (Optional)"):
+            st.json(st.session_state.ratings)
+
+        _, col2 = st.columns([3, 1])
+        with col2:
+            if st.button("🚀 Submit All Responses"):
+                submit_results(st.session_state["prolific_id"], st.session_state["ratings"])
+                st.session_state["completed"] = True # Mark as completed
+                st.rerun() # Refresh to show Thank You page
 
 if __name__ == "__main__":
     main()
