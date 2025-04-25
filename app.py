@@ -76,10 +76,10 @@ np.random.shuffle(survey_data)
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
 def survey_page(index):
-    """Render a single survey page with audio and sliders. Saves ratings directly."""
+    """Render a single survey page with audio and sliders. Ratings must be saved before advancing."""
     st.markdown(
         '<p style="color:red; font-weight:bold;">'
-        '**Reminder:** The content, speaker and duration may differ, but your rating should be based **only** on the speaking style and emotion.'
+        '**Reminder:** The content, speaker, and duration may differ. Rate only the speaking style and emotion.'
         '</p>',
         unsafe_allow_html=True
     )
@@ -95,67 +95,43 @@ def survey_page(index):
 
     st.subheader(f"Rating Task {index + 1} of {len(survey_data)}")
     st.markdown("**Reference Audio**")
-
-    try:
-        st.audio(reference_audio_path, format="audio/wav")
-    except Exception as e:
-        st.error(f"Error loading reference audio: {reference_audio_path}. Error: {e}")
-        return
+    st.audio(reference_audio_path, format="audio/wav")
 
     with st.form(key=f"form_page_{index}"):
         st.markdown("**Converted Audios**")
-        if not method_audio_paths:
-            st.warning("No converted audio files found for this page.")
-            cols = []
-        else:
-            cols = st.columns(len(method_audio_paths))
 
+        cols = st.columns(len(method_audio_paths))
         method_items = list(method_audio_paths.items())
 
         for i, (method, audio_path) in enumerate(method_items):
             with cols[i]:
                 st.markdown(f"**Option {i + 1} ({method})**")
-                try:
-                    st.audio(audio_path, format="audio/wav")
-                except Exception as e:
-                    st.error(f"Error loading {method} audio: {audio_path}. Error: {e}")
-                    st.error("Skipping rating for this option.")
-                    continue
+                st.audio(audio_path, format="audio/wav")
 
                 source_filename = reference_audio_path.split(os.sep)[-1]
                 converted_filename = audio_path.split(os.sep)[-1]
                 rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
                 default_val = st.session_state.ratings.get(rating_key, 3)
-
                 st.slider(
                     f"Similarity (Option {i+1} vs Reference)",
                     min_value=1, max_value=5, value=default_val,
                     key=rating_key
                 )
 
-        submit_clicked = st.form_submit_button("💾 Save Ratings for this Page")
+        save_and_next = st.form_submit_button("✅ Save Ratings and Go to Next Page")
 
-    if submit_clicked:
-        st.toast(f"Ratings for Task {index + 1} saved!", icon="✅")
-        for i, (method, audio_path) in enumerate(method_items):
-            if not audio_path:
-                continue
-            source_filename = os.path.basename(reference_audio_path)
-            converted_filename = os.path.basename(audio_path)
+    if save_and_next:
+        for method, audio_path in method_items:
+            source_filename = reference_audio_path.split(os.sep)[-1]
+            converted_filename = audio_path.split(os.sep)[-1]
             rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-            if rating_key in st.session_state:
-                st.session_state.ratings[rating_key] = st.session_state[rating_key]
+            st.session_state.ratings[rating_key] = st.session_state[rating_key]
 
-        st.session_state["ratings_saved_for_index"] = index
-        st.session_state["show_next_button"] = True
-
-
-
-
-
-
+        # Advance only after saving
+        st.session_state.page += 1
+        st.rerun()
 
 def submit_results(prolific_id, ratings):
     """Writes survey results to Firebase Firestore."""
@@ -271,7 +247,6 @@ def main():
             else:
                 st.button(next_label, disabled=True, key=f"next_btn_disabled_{page_index}")
                 st.warning("Please save ratings for this page before proceeding.")
-
         with nav_cols[1]: # Page Indicator
              st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
 
