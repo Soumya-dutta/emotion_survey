@@ -112,7 +112,7 @@ def survey_page(index):
         method_items = list(method_audio_paths.items())
         for i, (method, audio_path) in enumerate(method_items):
             with cols[i]:
-                st.markdown(f"**Option {i + 1}**")
+                st.markdown(f"**Option Heelo {i + 1}**")
                 try:
                     st.audio(audio_path, format="audio/wav")
                 except Exception as e:
