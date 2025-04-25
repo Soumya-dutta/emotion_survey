@@ -126,7 +126,7 @@ def submit_results(prolific_id, ratings):
     }
 
     # Write to Firestore
-    db.collection("survey_results").document(user_id).set(data)
+    db.collection("survey_results_comp").document(user_id).set(data)
 
 def main():
     """Main function handling survey navigation and submission."""
