@@ -134,6 +134,14 @@ def survey_page(index):
             rating_key = f"{source_filename}_{converted_filename}_{method}"
             ratings[rating_key] = st.session_state.get(rating_key, 3)
 
+        # Update session_state with the saved ratings, no page transition yet
+        session_state = st.session_state
+        if "ratings" not in session_state:
+            session_state["ratings"] = {}
+
+        for key, value in ratings.items():
+            session_state["ratings"][key] = value
+
     return ratings
 
 
