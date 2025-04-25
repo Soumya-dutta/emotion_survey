@@ -211,20 +211,7 @@ def main():
         st.progress((current_page + 1) / (num_survey_pages + 2), text=f"Progress: Task {current_page} of {num_survey_pages}")
         survey_page(page_index)
 
-        st.divider()
-        nav_cols = st.columns([1, 1, 1])
-
-        with nav_cols[0]:
-            if current_page > 0:
-                prev_label = "⬅️ Back to Example" if current_page == 1 else "⬅️ Previous Task"
-                if st.button(prev_label):
-                    st.session_state.page -= 1
-                    st.rerun()
-
-        with nav_cols[1]:
-            st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
-
-        # 🚫 No Next button here
+        # ❌ No back/next buttons here — survey_page handles navigation
 
     elif current_page == num_survey_pages + 1:
         st.subheader(f"{num_survey_pages + 2}. Submit Your Responses")
@@ -240,7 +227,6 @@ def main():
                 submit_results(st.session_state["prolific_id"], st.session_state["ratings"])
                 st.session_state["completed"] = True
                 st.rerun()
-
 
 if __name__ == "__main__":
     main()
