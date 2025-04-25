@@ -124,7 +124,7 @@ def survey_page(index):
                     key=rating_key
                 )
 
-        submit_clicked = st.form_submit_button("Save Ratings")
+        # submit_clicked = st.form_submit_button("Save Ratings")
 
     # Store the ratings
     for method, audio in method_audios.items():
