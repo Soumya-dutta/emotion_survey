@@ -116,7 +116,7 @@ def survey_page(index):
                     rating_key = f"{source_filename}_{converted_filename}_{method}"
 
                     default_val = st.session_state.get(rating_key, 3)
-                    st.session_state[rating_key] = st.slider(
+                    st.slider(
                         f"Similarity for Option {i + 1}",
                         1, 5, default_val,
                         key=rating_key
