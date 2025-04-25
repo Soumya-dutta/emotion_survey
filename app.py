@@ -93,16 +93,15 @@ def survey_page(index):
     }
     method_audio_paths = {k: v for k, v in method_audio_paths.items() if v}
 
-    st.subheader(f"Rating Task {index + 1} of {len(survey_data)}") # Changed title slightly
+    st.subheader(f"Rating Task {index + 1} of {len(survey_data)}")
     st.markdown("**Reference Audio**")
 
     try:
         st.audio(reference_audio_path, format="audio/wav")
     except Exception as e:
         st.error(f"Error loading reference audio: {reference_audio_path}. Error: {e}")
-        return # Stop rendering this page if reference audio fails
+        return
 
-    # Form for Rating - crucial for grouping inputs and the save button
     with st.form(key=f"form_page_{index}"):
         st.markdown("**Converted Audios**")
         if not method_audio_paths:
@@ -111,7 +110,7 @@ def survey_page(index):
         else:
             cols = st.columns(len(method_audio_paths))
 
-        method_items = list(method_audio_paths.items()) # Fixed order
+        method_items = list(method_audio_paths.items())
 
         for i, (method, audio_path) in enumerate(method_items):
             with cols[i]:
@@ -119,47 +118,39 @@ def survey_page(index):
                 try:
                     st.audio(audio_path, format="audio/wav")
                 except Exception as e:
-                     st.error(f"Error loading {method} audio: {audio_path}. Error: {e}")
-                     st.error("Skipping rating for this option.")
-                     continue # Skip slider if audio fails
+                    st.error(f"Error loading {method} audio: {audio_path}. Error: {e}")
+                    st.error("Skipping rating for this option.")
+                    continue
 
                 source_filename = reference_audio_path.split(os.sep)[-1]
                 converted_filename = audio_path.split(os.sep)[-1]
-                # Consistent rating key format
                 rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-                # Get default value from central session_state.ratings
                 default_val = st.session_state.ratings.get(rating_key, 3)
 
                 st.slider(
-                    f"Similarity (Option {i+1} vs Reference)", # More descriptive label
+                    f"Similarity (Option {i+1} vs Reference)",
                     min_value=1, max_value=5, value=default_val,
-                    key=rating_key # Use the unique key for the slider widget AND for session_state storage
+                    key=rating_key
                 )
 
-        # Submit button *inside* the form specific to this page's ratings
         submit_clicked = st.form_submit_button("💾 Save Ratings for this Page")
 
-    # Logic after *this page's form* is submitted
     if submit_clicked:
-    st.toast(f"Ratings for Task {index + 1} saved!", icon="✅")
+        st.toast(f"Ratings for Task {index + 1} saved!", icon="✅")
+        for i, (method, audio_path) in enumerate(method_items):
+            if not audio_path:
+                continue
+            source_filename = os.path.basename(reference_audio_path)
+            converted_filename = os.path.basename(audio_path)
+            rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
 
-    for i, (method, audio_path) in enumerate(method_items):
-        if not audio_path:
-            continue
-        source_filename = os.path.basename(reference_audio_path)
-        converted_filename = os.path.basename(audio_path)
-        rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
+            if rating_key in st.session_state:
+                st.session_state.ratings[rating_key] = st.session_state[rating_key]
 
-        if rating_key in st.session_state:
-            st.session_state.ratings[rating_key] = st.session_state[rating_key]
+        st.session_state["ratings_saved_for_index"] = index
+        st.session_state["show_next_button"] = True
 
-    # Set a flag so we know ratings were saved
-    st.session_state["ratings_saved_for_index"] = index
-    if st.session_state.get("ratings_saved_for_index") == index:
-    if st.button("➡️ Go to Next Task"):
-        st.session_state.page_index += 1
-        st.rerun()  # Needed to actually move to next page
 
 
 
@@ -270,14 +261,16 @@ def main():
         st.divider()
         nav_cols = st.columns([1, 1, 1]) # Use 3 columns for Prev, Info, Next
 
-        with nav_cols[0]: # Previous Button
-            # Allow going back to Example (page 0) or previous survey page
-            if current_page > 0: # Can always go back from page 1 onwards
-                 # Check if it's the first survey page (current_page == 1)
-                 prev_label = "⬅️ Back to Example" if current_page == 1 else "⬅️ Previous Task"
-                 if st.button(prev_label):
-                    st.session_state.page -= 1
+        with nav_cols[2]:  # Next Button
+            next_label = "Finish Survey Tasks ➡️" if current_page == num_survey_pages else "Next Task ➡️"
+            if st.session_state.get("ratings_saved_for_index") == page_index:
+                if st.button(next_label, key=f"next_btn_{page_index}"):
+                    st.session_state.page += 1
+                    st.session_state["show_next_button"] = False
                     st.rerun()
+            else:
+                st.button(next_label, disabled=True, key=f"next_btn_disabled_{page_index}")
+                st.warning("Please save ratings for this page before proceeding.")
 
         with nav_cols[1]: # Page Indicator
              st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
