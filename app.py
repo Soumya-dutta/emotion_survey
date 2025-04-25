@@ -106,7 +106,7 @@ def survey_page(index):
                     converted_filename = audio.split("/")[-1]
                     rating_key = f"{source_filename}_{converted_filename}_{method}"
                     ratings[rating_key] = st.slider(
-                        f"Similarity for Option {i+1}", 1, 5, 3
+                        f"Similarity for Option {i+1}", 1, 5, st.session_state[rating_key],
                     )
 
         return ratings
