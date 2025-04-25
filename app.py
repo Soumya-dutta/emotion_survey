@@ -79,6 +79,7 @@ def survey_page(index):
     if index >= len(survey_data):
         return {}
 
+    # Add a reminder message at the top
     st.markdown(
         '<p style="color:red; font-weight:bold;">'
         '**Reminder:** The content, speaker and duration may differ, but your rating should be based **only** on the speaking style and emotion.'
@@ -86,6 +87,7 @@ def survey_page(index):
         unsafe_allow_html=True
     )
 
+    # Get data for the current survey page
     data = survey_data[index]
     reference_audio = data["reference"]
     method_audios = {
@@ -97,24 +99,38 @@ def survey_page(index):
 
     st.subheader(f"Page {index + 1}")
     st.markdown("**Reference Audio**")
-    st.audio(reference_audio, format="audio/wav")
 
+    # Load the reference audio only once and store it in session state
+    if f"reference_audio_{index}" not in st.session_state:
+        st.session_state[f"reference_audio_{index}"] = reference_audio
+
+    # Play reference audio
+    st.audio(st.session_state[f"reference_audio_{index}"], format="audio/wav")
+
+    # Initialize ratings dictionary
     ratings = {}
 
+    # Create a form for rating the audio files
     with st.form(key=f"form_page_{index}"):
+
+        # Load the method audios only once and store them in session state
+        if f"method_audios_{index}" not in st.session_state:
+            st.session_state[f"method_audios_{index}"] = method_audios
+
         st.markdown("**Converted Audios**")
-        cols = st.columns(len(method_audios))
-        
-        for i, (method, audio) in enumerate(method_audios.items()):
+        cols = st.columns(len(st.session_state[f"method_audios_{index}"]))
+
+        for i, (method, audio) in enumerate(st.session_state[f"method_audios_{index}"].items()):
             with cols[i]:
                 st.markdown(f"**Option {i + 1}**")
                 st.audio(audio, format="audio/wav")
 
+                # Create a unique rating key
                 source_filename = reference_audio.split("/")[-1]
                 converted_filename = audio.split("/")[-1]
                 rating_key = f"{source_filename}_{converted_filename}_{method}"
 
-                # Use key to bind to session_state
+                # Set the default slider value to the previous value (if any)
                 default_val = st.session_state.get(rating_key, 3)
                 st.slider(
                     f"Similarity for Option {i + 1}",
@@ -124,29 +140,26 @@ def survey_page(index):
                     key=rating_key
                 )
 
-        # Submit button inside the form to save the ratings
+        # Submit button inside the form
         submit_clicked = st.form_submit_button("Save Ratings")
 
-    # Store the ratings after form submission, but prevent page transition
+    # Store ratings when the form is submitted, but prevent page transition
     if submit_clicked:
-        for method, audio in method_audios.items():
+        for method, audio in st.session_state[f"method_audios_{index}"].items():
             source_filename = reference_audio.split("/")[-1]
             converted_filename = audio.split("/")[-1]
             rating_key = f"{source_filename}_{converted_filename}_{method}"
             ratings[rating_key] = st.session_state.get(rating_key, 3)
 
         # Update session_state with the saved ratings
-        session_state = st.session_state
-        if "ratings" not in session_state:
-            session_state["ratings"] = {}
+        if "ratings" not in st.session_state:
+            st.session_state["ratings"] = {}
 
         for key, value in ratings.items():
-            session_state["ratings"][key] = value
-
-        # Keep the user on the current page, no automatic transition
-        session_state["page"] = index  # Maintain the current page index
+            st.session_state["ratings"][key] = value
 
     return ratings
+
 
 
 
