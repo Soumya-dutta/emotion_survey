@@ -71,7 +71,6 @@ survey_data = [
     {"reference": "samples_ZEST/ute/1057_IWL_DIS_XX.wav", "zest": "samples_ZEST/ute/0017_000038--1057_IWL_DIS_XX.wav", "vevo": "samples_VEVO/ute/0017_000038--1057_IWL_DIS_XX.wav"},
     {"reference": "samples_ZEST/ute/1089_IOM_FEA_XX.wav", "zest": "samples_ZEST/ute/0016_000035--1089_IOM_FEA_XX.wav", "vevo": "samples_VEVO/ute/0016_000035--1089_IOM_FEA_XX.wav"},
     ]
-np.random.shuffle(survey_data)
 # Trick pages mapping
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
