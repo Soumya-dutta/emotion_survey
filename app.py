@@ -230,8 +230,8 @@ def main():
         if proceed:
             st.session_state["page"] = 0 # Move to Example page
             st.rerun()
-        elif not st.session_state["prolific_id"] and st.button attempted: # Check if button was clicked without ID
-             st.warning("Please enter your Prolific ID to proceed.")
+        # elif not st.session_state["prolific_id"] and st.button attempted: # Check if button was clicked without ID
+        #      st.warning("Please enter your Prolific ID to proceed.")
 
 
     elif current_page == 0:
