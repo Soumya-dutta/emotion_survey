@@ -75,44 +75,64 @@ np.random.shuffle(survey_data)
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
 def survey_page(index):
-    """Dynamically renders a survey page based on index"""
-    if index < len(survey_data):
-        st.markdown(
+    """Dynamically renders a survey page based on index."""
+    ratings = {}
+
+    if index >= len(survey_data):
+        return ratings
+
+    st.markdown(
         '<p style="color:red; font-weight:bold;">'
         '**Reminder:** The content, speaker and duration may differ, but your rating should be based **only** on the speaking style and emotion.'
-        '</p>', 
+        '</p>',
         unsafe_allow_html=True
-        )
-        data = survey_data[index]
-        reference_audio = data["reference"]
-        method_audios = {
-            "zest": data.get("zest"),
-            "gan": data.get("gan"),
-            "vevo": data.get("vevo")
-        }
-        st.subheader(f"Page {index + 1}")
-        st.markdown("**Reference Audio**")
-        st.audio(reference_audio, format="audio/wav")
-        method_audios = {k: v for k, v in method_audios.items() if v}
-        if method_audios:
-            st.markdown("**Converted Audios**")
-            cols = st.columns(len(method_audios))
-            ratings = {}
-            with st.form(key=f"rating_form_{index}"):
-                for i, (method, audio) in enumerate(method_audios.items()):
-                    with cols[i]:
-                        st.markdown(f"**Option {i+1}**")
-                        st.audio(audio, format="audio/wav")
-                        source_filename = reference_audio.split("/")[-1]
-                        converted_filename = audio.split("/")[-1]
-                        rating_key = f"{source_filename}_{converted_filename}_{method}"
-                        ratings[rating_key] = st.slider(
-                            f"Similarity for Option {i+1}", 1, 5, 3,
-                        )
-                st.form_submit_button("Save Ratings")
+    )
 
-        return ratings
-    return {}
+    data = survey_data[index]
+    reference_audio = data["reference"]
+    method_audios = {
+        "zest": data.get("zest"),
+        "gan": data.get("gan"),
+        "vevo": data.get("vevo")
+    }
+
+    st.subheader(f"Page {index + 1}")
+    st.markdown("**Reference Audio**")
+    st.audio(reference_audio, format="audio/wav")
+
+    method_audios = {k: v for k, v in method_audios.items() if v}
+
+    if method_audios:
+        st.markdown("**Converted Audios**")
+        cols = st.columns(len(method_audios))
+
+        with st.form(key=f"rating_form_{index}"):
+            for i, (method, audio) in enumerate(method_audios.items()):
+                with cols[i]:
+                    st.markdown(f"**Option {i + 1}**")
+                    st.audio(audio, format="audio/wav")
+                    source_filename = reference_audio.split("/")[-1]
+                    converted_filename = audio.split("/")[-1]
+                    rating_key = f"{source_filename}_{converted_filename}_{method}"
+
+                    default_val = st.session_state.get(rating_key, 3)
+                    st.session_state[rating_key] = st.slider(
+                        f"Similarity for Option {i + 1}",
+                        1, 5, default_val,
+                        key=rating_key
+                    )
+
+            submitted = st.form_submit_button("Save Ratings")
+
+        # Store all the ratings in the return dict regardless of form_submit_button
+        for i, (method, audio) in enumerate(method_audios.items()):
+            source_filename = reference_audio.split("/")[-1]
+            converted_filename = audio.split("/")[-1]
+            rating_key = f"{source_filename}_{converted_filename}_{method}"
+            ratings[rating_key] = st.session_state[rating_key]
+
+    return ratings
+
 
 def submit_results(prolific_id, ratings):
     """Writes survey results to Firebase Firestore."""
