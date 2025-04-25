@@ -124,9 +124,10 @@ def survey_page(index):
                     key=rating_key
                 )
 
+        # Submit button inside the form to save the ratings
         submit_clicked = st.form_submit_button("Save Ratings")
 
-    # Store the ratings
+    # Store the ratings after form submission, but prevent page transition
     if submit_clicked:
         for method, audio in method_audios.items():
             source_filename = reference_audio.split("/")[-1]
@@ -134,7 +135,7 @@ def survey_page(index):
             rating_key = f"{source_filename}_{converted_filename}_{method}"
             ratings[rating_key] = st.session_state.get(rating_key, 3)
 
-        # Update session_state with the saved ratings, no page transition yet
+        # Update session_state with the saved ratings
         session_state = st.session_state
         if "ratings" not in session_state:
             session_state["ratings"] = {}
@@ -142,7 +143,11 @@ def survey_page(index):
         for key, value in ratings.items():
             session_state["ratings"][key] = value
 
+        # Keep the user on the current page, no automatic transition
+        session_state["page"] = index  # Maintain the current page index
+
     return ratings
+
 
 
 
