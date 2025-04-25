@@ -10,6 +10,7 @@ import streamlit.components.v1 as components
 import datetime
 import time
 import numpy as np
+import os
 
 
 # Load Firebase secrets
