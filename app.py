@@ -110,7 +110,7 @@ def survey_page(index):
                     )
 
         return ratings
-    return None
+    return {}
 
 def submit_results(prolific_id, ratings):
     """Writes survey results to Firebase Firestore."""
@@ -177,11 +177,14 @@ def main():
         if page_index < len(survey_data):
             ratings = survey_page(page_index)
 
-            for key in ratings:
-                session_state["ratings"][key] = ratings[key]
+            # Save ratings only if not already stored to avoid overwriting unintentionally
+            for key, val in ratings.items():
+                if key not in session_state["ratings"]:
+                    session_state["ratings"][key] = val
 
         st.progress(session_state["page"] / total_pages)
 
+        # Ensure that moving to the next page only happens on explicit button press
         if session_state["page"] < total_pages:
             if st.button("Next"):
                 session_state["page"] += 1
