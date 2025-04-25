@@ -167,119 +167,70 @@ def main():
     """Main function handling survey navigation and submission."""
     st.title("Survey: Emotional Speech Style Similarity")
 
-    # Use st.session_state directly for clarity
     if "prolific_id" not in st.session_state:
         st.session_state["prolific_id"] = ""
     if "page" not in st.session_state:
-        # Page states: -1: ID, 0: Example, 1 to N: Survey pages, N+1: Submit page
         st.session_state["page"] = -1
-        st.session_state["ratings"] = {} # Initialize central ratings dict
+        st.session_state["ratings"] = {}
     if "completed" not in st.session_state:
         st.session_state["completed"] = False
 
-    # Calculate total number of actual survey pages
     num_survey_pages = len(survey_data)
-    # Total steps include ID (-1), Example (0), survey pages (1 to N)
-    total_steps = num_survey_pages + 1
 
-    # --- Final Thank You Page ---
     if st.session_state["completed"]:
         st.balloons()
         st.subheader("Thank You for Your Participation! 🎉")
         st.write("Your responses have been successfully submitted.")
-        st.write("You may now close this window.")
-        # Optionally display Prolific completion code here
-        # st.code("YOUR_PROLIFIC_COMPLETION_CODE")
-        return # Stop execution
+        return
 
-    # --- Page Rendering Logic ---
     current_page = st.session_state["page"]
 
     if current_page == -1:
-        # --- Prolific ID Input Page ---
         st.subheader("1. Enter Your Prolific ID")
         prolific_id_input = st.text_input("Prolific ID:", value=st.session_state["prolific_id"], key="prolific_id_widget")
-
-        # Update session state if input changes
         st.session_state["prolific_id"] = prolific_id_input
-
-        # Use columns for layout
-        _, col2 = st.columns([3, 1]) # Push button to the right
+        _, col2 = st.columns([3, 1])
         with col2:
-            # Disable button if ID is empty
-            proceed = st.button("Next Step ➡️", disabled=(not st.session_state["prolific_id"]))
-
-        if proceed:
-            st.session_state["page"] = 0 # Move to Example page
-            st.rerun()
-        # elif not st.session_state["prolific_id"] and st.button attempted: # Check if button was clicked without ID
-        #      st.warning("Please enter your Prolific ID to proceed.")
-
+            if st.button("Next Step ➡️", disabled=(not st.session_state["prolific_id"])):
+                st.session_state["page"] = 0
+                st.rerun()
 
     elif current_page == 0:
-        # --- Example Page ---
         st.subheader("2. Example Task & Instructions")
-        st.write(
-            "**Instructions:** You will hear a reference audio sample followed by one or more converted audio samples. "
-            "Please rate how similar the **speaking style and emotion** of each converted sample is to the reference sample on a scale of 1 (Not similar) to 5 (Very similar). "
-        )
-        st.warning(
-            "**Important:** The verbal content, speaker identity, and duration might differ between the reference and converted samples. Please base your rating **only** on the similarity of the speaking style and emotion."
-            )
-        example() # Display the example content
-
+        st.write("**Instructions:** You will hear a reference audio sample followed by one or more converted audio samples. Please rate how similar the **speaking style and emotion** is.")
+        st.warning("Content, speaker and duration might differ. Focus **only** on speaking style and emotion.")
+        example()
         _, col2 = st.columns([3, 1])
         with col2:
             if st.button("Start Survey Tasks ➡️"):
-                st.session_state["page"] = 1 # Move to first survey page
+                st.session_state["page"] = 1
                 st.rerun()
 
     elif 1 <= current_page <= num_survey_pages:
-        # --- Survey Pages ---
-        page_index = current_page - 1 # 0-based index for survey_data list
-
-        # Display progress (adjusting for ID and Example pages)
-        # Current step is 'page + 1' (since page starts at -1)
-        # Total steps including ID, Example, N survey pages = N + 2
-        progress_float = (current_page + 1) / (num_survey_pages + 2)
-        st.progress(progress_float, text=f"Progress: Task {current_page} of {num_survey_pages}")
-
-        # Render the survey page - it handles its own rating saving via its form
+        page_index = current_page - 1
+        st.progress((current_page + 1) / (num_survey_pages + 2), text=f"Progress: Task {current_page} of {num_survey_pages}")
         survey_page(page_index)
 
-        # --- Navigation Buttons (Below the Survey Page Form) ---
         st.divider()
-        nav_cols = st.columns([1, 1, 1]) # Use 3 columns for Prev, Info, Next
+        nav_cols = st.columns([1, 1, 1])
 
-        with nav_cols[2]:  # Next Button
-            next_label = "Finish Survey Tasks ➡️" if current_page == num_survey_pages else "Next Task ➡️"
-            if st.session_state.get("ratings_saved_for_index") == page_index:
-                if st.button(next_label, key=f"next_btn_{page_index}"):
-                    st.session_state.page += 1
-                    st.session_state["show_next_button"] = False
+        with nav_cols[0]:
+            if current_page > 0:
+                prev_label = "⬅️ Back to Example" if current_page == 1 else "⬅️ Previous Task"
+                if st.button(prev_label):
+                    st.session_state.page -= 1
                     st.rerun()
-            else:
-                st.button(next_label, disabled=True, key=f"next_btn_disabled_{page_index}")
-                st.warning("Please save ratings for this page before proceeding.")
-        with nav_cols[1]: # Page Indicator
-             st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
 
+        with nav_cols[1]:
+            st.markdown(f"<div style='text-align: center;'>Task {current_page} / {num_survey_pages}</div>", unsafe_allow_html=True)
 
-        with nav_cols[2]: # Next Button
-             # Check if it's the last survey page
-             next_label = "Finish Survey Tasks ➡️" if current_page == num_survey_pages else "Next Task ➡️"
-             if st.button(next_label):
-                 st.session_state.page += 1 # Move to next survey page or to submit page
-                 st.rerun()
+        # 🚫 No Next button here
 
     elif current_page == num_survey_pages + 1:
-        # --- Submission Page ---
         st.subheader(f"{num_survey_pages + 2}. Submit Your Responses")
         st.success("Survey tasks completed! ✅")
-        st.write("Thank you for completing all the rating tasks. Please click 'Submit All Responses' below to finalize your participation.")
-        st.warning("Ensure you have saved ratings on each page using the 'Save Ratings for this Page' button before submitting.")
-
-        # Display collected ratings (optional, for user review)
+        st.write("Click 'Submit All Responses' below to finalize your participation.")
+        st.warning("Make sure you clicked 'Save Ratings for this Page' on all tasks.")
         with st.expander("Review Your Ratings (Optional)"):
             st.json(st.session_state.ratings)
 
@@ -287,8 +238,9 @@ def main():
         with col2:
             if st.button("🚀 Submit All Responses"):
                 submit_results(st.session_state["prolific_id"], st.session_state["ratings"])
-                st.session_state["completed"] = True # Mark as completed
-                st.rerun() # Refresh to show Thank You page
+                st.session_state["completed"] = True
+                st.rerun()
+
 
 if __name__ == "__main__":
     main()
