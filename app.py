@@ -141,10 +141,10 @@ def survey_page(index):
                 )
 
         # Submit button inside the form
-        submit_clicked = st.form_submit_button("Save Ratings")
+        # submit_clicked = st.form_submit_button("Save Ratings")
 
     # Store ratings when the form is submitted, but prevent page transition
-    if submit_clicked:
+    if True:
         for method, audio in st.session_state[f"method_audios_{index}"].items():
             source_filename = reference_audio.split("/")[-1]
             converted_filename = audio.split("/")[-1]
