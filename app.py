@@ -76,10 +76,10 @@ np.random.shuffle(survey_data)
 trick_pages = [trick_1, trick_2, trick_3, trick_4]
 
 def survey_page(index):
-    """Render a single survey page with audio and sliders. Ratings must be saved before advancing."""
+    """Render a single survey page with audio and sliders. Saves ratings and moves forward."""
     st.markdown(
         '<p style="color:red; font-weight:bold;">'
-        '**Reminder:** The content, speaker, and duration may differ. Rate only the speaking style and emotion.'
+        '**Reminder:** The content, speaker and duration may differ, but your rating should be based **only** on the speaking style and emotion.'
         '</p>',
         unsafe_allow_html=True
     )
@@ -95,43 +95,57 @@ def survey_page(index):
 
     st.subheader(f"Rating Task {index + 1} of {len(survey_data)}")
     st.markdown("**Reference Audio**")
-    st.audio(reference_audio_path, format="audio/wav")
+
+    try:
+        st.audio(reference_audio_path, format="audio/wav")
+    except Exception as e:
+        st.error(f"Error loading reference audio: {reference_audio_path}. Error: {e}")
+        return
 
     with st.form(key=f"form_page_{index}"):
         st.markdown("**Converted Audios**")
+        if not method_audio_paths:
+            st.warning("No converted audio files found for this page.")
+            cols = []
+        else:
+            cols = st.columns(len(method_audio_paths))
 
-        cols = st.columns(len(method_audio_paths))
         method_items = list(method_audio_paths.items())
-
         for i, (method, audio_path) in enumerate(method_items):
             with cols[i]:
                 st.markdown(f"**Option {i + 1} ({method})**")
-                st.audio(audio_path, format="audio/wav")
+                try:
+                    st.audio(audio_path, format="audio/wav")
+                except Exception as e:
+                    st.error(f"Error loading {method} audio: {audio_path}. Error: {e}")
+                    continue
 
-                source_filename = reference_audio_path.split(os.sep)[-1]
-                converted_filename = audio_path.split(os.sep)[-1]
+                source_filename = os.path.basename(reference_audio_path)
+                converted_filename = os.path.basename(audio_path)
                 rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
-
                 default_val = st.session_state.ratings.get(rating_key, 3)
+
                 st.slider(
                     f"Similarity (Option {i+1} vs Reference)",
                     min_value=1, max_value=5, value=default_val,
                     key=rating_key
                 )
 
-        save_and_next = st.form_submit_button("✅ Save Ratings and Go to Next Page")
+        # 🎯 THIS is now the only "next" button:
+        submit_clicked = st.form_submit_button("✅ Save Ratings and Go to Next Page")
 
-    if save_and_next:
-        for method, audio_path in method_items:
-            source_filename = reference_audio_path.split(os.sep)[-1]
-            converted_filename = audio_path.split(os.sep)[-1]
+    if submit_clicked:
+        for i, (method, audio_path) in enumerate(method_items):
+            if not audio_path: continue
+            source_filename = os.path.basename(reference_audio_path)
+            converted_filename = os.path.basename(audio_path)
             rating_key = f"rating_{source_filename}_{converted_filename}_{method}"
-
-            st.session_state.ratings[rating_key] = st.session_state[rating_key]
-
-        # Advance only after saving
+            if rating_key in st.session_state:
+                st.session_state.ratings[rating_key] = st.session_state[rating_key]
+        st.toast(f"Ratings for Task {index + 1} saved!", icon="✅")
         st.session_state.page += 1
         st.rerun()
+
 
 def submit_results(prolific_id, ratings):
     """Writes survey results to Firebase Firestore."""
